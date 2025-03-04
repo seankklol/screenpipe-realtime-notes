@@ -1,0 +1,15 @@
+{
+  "name": "real-time-meeting-notes",
+  "description": "Generates structured meeting notes in real-time from audio transcription and screen content",
+  "permissions": [
+    "audio.record",
+    "display.record",
+    "ai"
+  ],
+  "crons": [
+    {
+      "path": "/api/pipeline",
+      "schedule": "0 0 11 * * *"
+    }
+  ]
+}
