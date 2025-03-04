@@ -4,16 +4,18 @@ A Next.js application that captures, processes, and summarizes meeting content i
 
 ## Features
 
-- **Real-time Audio Transcription**: Capture and transcribe meeting audio as it happens
-- **Visual Content Processing**: Extract text and context from screen content (slides, documents) (in progress)
-- **Intelligent Notes Generation**: Process transcriptions into structured, useful notes using LLM (in progress)
-- **Export Options**: Save notes in multiple formats (upcoming)
+- ✅ **Real-time Audio Transcription**: Capture and transcribe meeting audio in real-time
+- ✅ **Visual Content Processing**: Extract and process content from screen captures using OCR
+- ✅ **Content Synchronization**: Align visual content with audio transcriptions
+- ✅ **Intelligent Notes Generation**: Process multi-modal data into structured notes using LLM
+- ✅ **Export Options**: Save notes in multiple formats (PDF, Markdown, plain text)
 
 ## Project Status
 
-Currently in Phase 1 development (35% complete):
-- ✅ Audio transcription and basic UI are implemented
-- 🔄 Visual content integration and LLM processing are in progress
+**Current Phase**: 1 (Core Functionality)
+**Completion**: 95%
+
+All core features have been implemented. The application is ready for testing.
 
 ## Getting Started
 
@@ -21,6 +23,7 @@ Currently in Phase 1 development (35% complete):
 
 1. Install Screenpipe from the [official website](https://screenpipe.com/)
 2. Node.js 18+ and npm/yarn/bun
+3. OpenAI API Key for LLM integration
 
 ### Setup
 
@@ -42,7 +45,7 @@ Currently in Phase 1 development (35% complete):
 3. Copy the environment file and add your API keys
    ```bash
    cp .env.local.example .env.local
-   # Edit .env.local with your API keys
+   # Edit .env.local with your OpenAI API key
    ```
 
 4. Start the development server
@@ -54,20 +57,68 @@ Currently in Phase 1 development (35% complete):
    bun dev
    ```
 
-5. Open [http://localhost:3000](http://localhost:3000) with your browser
+5. Open [http://localhost:3000](http://localhost:3000) with your browser to access the application
 
-### Configuration
+## Testing the Application
 
-The application requires the following API keys:
-- **OpenAI API Key**: For LLM integration to process meeting notes
-  - Get your API key from [OpenAI's website](https://platform.openai.com/api-keys)
+Follow these steps to test the application:
 
-## Usage
+1. **Launch the Application**
+   - Start the development server as described above
+   - Open http://localhost:3000 in your browser
+   - You will be automatically redirected to the notes page
 
-1. Start a meeting in Screenpipe with microphone access enabled
-2. Navigate to the application in your browser
-3. The application will automatically begin transcribing audio
-4. When visual content integration is ready, screen sharing will be required
+2. **Start Recording**
+   - Click the "Start Recording" button
+   - Grant necessary permissions for audio and screen recording
+   - Select the screen/window you want to capture
+   - The application will begin capturing audio and screen content
+
+3. **Observe Real-time Content**
+   - Watch as audio transcriptions appear in real-time
+   - Visual content will be captured and processed
+   - Content synchronization will attempt to align audio with visual elements
+
+4. **Generate Notes**
+   - Enter a meeting title and participants (comma-separated)
+   - Click "Generate Notes" to process the captured content
+   - For quick testing without recording, use the "Generate Mock Notes (Demo)" button
+
+5. **View and Export Notes**
+   - Review the generated notes in the tabbed interface
+   - Use the export menu to save notes in your preferred format
+   - Share notes via the share menu options
+
+6. **Testing Known Limitations**
+   - Content detection for complex visual elements may have reduced accuracy
+   - Processing long meetings (>30 minutes) may take more time
+   - For best results, use clear speech and visible screen content
+
+## Troubleshooting
+
+If you encounter issues during testing:
+
+1. **API Errors**
+   - Check your OpenAI API key in the .env.local file
+   - Ensure your API key has sufficient quota/credits
+
+2. **Recording Issues**
+   - Make sure Screenpipe is installed and running
+   - Check browser permissions for microphone and screen capture
+   - Try restarting Screenpipe and/or your browser
+
+3. **Performance Problems**
+   - For long meetings, processing may take time
+   - Consider testing with shorter recording sessions first
+   - Check system resources if the application becomes unresponsive
+
+## Next Steps
+
+After testing, we plan to:
+
+1. Implement performance optimizations (chunking for large meetings)
+2. Add local storage to save meeting history
+3. Enhance content detection accuracy for complex visual elements
 
 ## Development Roadmap
 

@@ -10,6 +10,14 @@ import {
 import { DetectedContent } from '@/lib/visual/content-detector';
 import { ContentType } from '@/lib/visual/content-detector';
 
+// Define interface for synchronized content from API
+interface SynchronizedContentItem {
+  timestamp: string;
+  transcription: string;
+  visualContentType: string;
+  syncConfidence: number;
+}
+
 // Validate the request data structure
 function validateRequest(data: any): { valid: boolean; error?: string } {
   // Validate basic structure
@@ -32,9 +40,24 @@ function validateRequest(data: any): { valid: boolean; error?: string } {
     return { valid: false, error: 'Transcript must be an array' };
   }
   
+  // Transcriptions should be an array if provided
+  if (data.transcriptions && !Array.isArray(data.transcriptions)) {
+    return { valid: false, error: 'Transcriptions must be an array' };
+  }
+  
   // Visual content should be an array if provided
   if (data.visualContent && !Array.isArray(data.visualContent)) {
     return { valid: false, error: 'Visual content must be an array' };
+  }
+  
+  // Frames should be an array if provided
+  if (data.frames && !Array.isArray(data.frames)) {
+    return { valid: false, error: 'Frames must be an array' };
+  }
+  
+  // Synchronized content should be an array if provided
+  if (data.synchronizedContent && !Array.isArray(data.synchronizedContent)) {
+    return { valid: false, error: 'Synchronized content must be an array' };
   }
   
   // Validate date formats if provided
@@ -66,7 +89,7 @@ export async function POST(req: Request) {
       );
     }
     
-    const { title, participants, transcript, visualContent } = data;
+    const { title, participants, transcript, visualContent, transcriptions, frames, synchronizedContent } = data;
     
     // Prepare metadata
     const metadata: MeetingMetadata = {
@@ -79,15 +102,58 @@ export async function POST(req: Request) {
       description: data.description
     };
     
-    // Process transcript
-    const processedTranscript: TranscriptSegment[] = transcript 
-      ? transcript 
-      : generateMockTranscript(metadata);
+    // Process transcript/transcriptions - prefer transcript if available, otherwise use transcriptions
+    let processedTranscript: TranscriptSegment[] = [];
     
-    // Process visual content
-    const processedVisualContent: DetectedContent[] = visualContent 
-      ? visualContent 
-      : generateMockVisualContent();
+    if (transcript && transcript.length > 0) {
+      processedTranscript = transcript;
+    } else if (transcriptions && transcriptions.length > 0) {
+      // Map individual transcription items to transcript segments
+      processedTranscript = transcriptions.map((item: any) => ({
+        speaker: item.speaker_id ? `Speaker ${item.speaker_id}` : 'Unknown',
+        text: item.text,
+        timestamp: item.timestamp,
+        duration: item.duration || 0
+      }));
+    } else {
+      // If no real transcription data, generate mock data
+      processedTranscript = generateMockTranscript(metadata);
+    }
+    
+    // Process visual content - prefer visualContent if available, otherwise use frames
+    let processedVisualContent: DetectedContent[] = [];
+    
+    if (visualContent && visualContent.length > 0) {
+      processedVisualContent = visualContent;
+    } else if (frames && frames.length > 0) {
+      // Map frames to simple detected content (text type)
+      processedVisualContent = frames.map((frame: any) => ({
+        type: ContentType.TEXT,
+        content: frame.text || '',
+        confidence: 0.8,
+        timestamp: frame.timestamp,
+        frameId: frame.id,
+        metadata: {
+          app_name: frame.app_name,
+          window_name: frame.window_name
+        }
+      }));
+    } else {
+      // If no real visual content, generate mock data
+      processedVisualContent = generateMockVisualContent();
+    }
+    
+    // Process synchronized content if available
+    if (synchronizedContent && synchronizedContent.length > 0) {
+      // Enhance the context with synchronized content
+      // We'll extend the existing metadata with this information
+      metadata.synchronizedContent = synchronizedContent.map((item: SynchronizedContentItem) => ({
+        timestamp: item.timestamp,
+        transcription: item.transcription,
+        visualContentType: item.visualContentType,
+        syncConfidence: item.syncConfidence
+      }));
+    }
     
     // Implement timeout for note generation to prevent hanging requests
     const timeoutPromise = new Promise<null>((_, reject) => {

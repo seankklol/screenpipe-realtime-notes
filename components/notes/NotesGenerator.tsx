@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { MeetingNotes } from '@/lib/llm/notes-generator';
 import NotesDisplay from './NotesDisplay';
 import RecordingControls from '@/components/recording-controls';
@@ -8,10 +8,15 @@ import StatusIndicators from '@/components/status-indicators';
 import { VisualFrame } from '@/lib/visual/capture';
 import TranscriptionView from './TranscriptionView';
 import VisualContentPreview from './VisualContentPreview';
+import SynchronizedContentView from './SynchronizedContentView';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { useApiPost } from '@/lib/hooks/use-api';
 import { TranscriptionItem } from './TranscriptionView';
 import ApiErrorDisplay from '@/components/ApiErrorDisplay';
+import { synchronizeContent, SynchronizedContent } from '@/lib/visual/content-sync';
+import { detectContent, DetectedContent } from '@/lib/visual/content-detector';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 /**
  * Component for generating meeting notes
@@ -29,6 +34,8 @@ export default function NotesGenerator() {
   const [elapsedTime, setElapsedTime] = useState(0);
   const [processingStatus, setProcessingStatus] = useState<'idle' | 'processing' | 'completed' | 'error'>('idle');
   const [showRealTimeFeedback, setShowRealTimeFeedback] = useState(true);
+  const [detectedContents, setDetectedContents] = useState<DetectedContent[]>([]);
+  const [syncedContents, setSyncedContents] = useState<SynchronizedContent[]>([]);
   
   // Setup API hook for notes generation
   const notesApi = useApiPost<MeetingNotes, any>('/api/generate-notes');
@@ -62,6 +69,35 @@ export default function NotesGenerator() {
     }
   }, [notesApi.error, notesApi.isLoading, notesApi.data]);
   
+  // Process frames to detect content whenever a new frame is added
+  useEffect(() => {
+    const processLatestFrame = async () => {
+      if (frames.length > 0) {
+        const latestFrame = frames[frames.length - 1];
+        try {
+          const contentResults = await detectContent(latestFrame);
+          setDetectedContents(prev => [...prev, ...contentResults]);
+        } catch (err) {
+          console.error('Error detecting content in frame:', err);
+        }
+      }
+    };
+    
+    processLatestFrame();
+  }, [frames]);
+  
+  // Synchronize content whenever transcriptions or detected contents change
+  useEffect(() => {
+    if (transcriptions.length > 0 && detectedContents.length > 0) {
+      const synchronized = synchronizeContent(
+        detectedContents,
+        transcriptions,
+        5000 // 5 second maximum time gap
+      );
+      setSyncedContents(synchronized);
+    }
+  }, [transcriptions, detectedContents]);
+  
   // Function to handle recording state change
   const handleRecordingStateChange = (recording: boolean) => {
     setIsRecording(recording);
@@ -69,6 +105,8 @@ export default function NotesGenerator() {
       // Reset data when starting a new recording
       setTranscriptions([]);
       setFrames([]);
+      setDetectedContents([]);
+      setSyncedContents([]);
       setElapsedTime(0);
       setProcessingStatus('idle');
       setError(undefined);
@@ -109,6 +147,13 @@ export default function NotesGenerator() {
           text: frame.text,
           app_name: frame.app_name,
           window_name: frame.window_name
+        })),
+        // Add synchronized content for better context
+        synchronizedContent: syncedContents.map(item => ({
+          timestamp: item.timestamp,
+          transcription: item.transcription.text,
+          visualContentType: item.visualContent?.type || 'none',
+          syncConfidence: item.syncConfidence
         }))
       });
       
@@ -254,7 +299,58 @@ The team also reviewed customer feedback and identified several opportunities fo
     <ErrorBoundary onError={(error) => console.error('Component Error:', error)}>
       <div className="p-6 max-w-4xl mx-auto">
         <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">Meeting Notes Generator</h2>
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-gray-800">Meeting Notes Generator</h2>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm" className="flex items-center gap-2">
+                  <span className="w-5 h-5 flex items-center justify-center">?</span>
+                  <span>How to use</span>
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle>How to Use the Meeting Notes Generator</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 mt-4">
+                  <div>
+                    <h3 className="text-lg font-medium mb-2">1. Start Recording</h3>
+                    <p>Click the "Start Recording" button to begin capturing audio and screen content. You'll need to grant permissions for audio and screen recording.</p>
+                  </div>
+                  
+                  <div>
+                    <h3 className="text-lg font-medium mb-2">2. Capture Your Meeting</h3>
+                    <p>Conduct your meeting as usual. The application will transcribe audio in real-time and capture visual content from your screen.</p>
+                  </div>
+                  
+                  <div>
+                    <h3 className="text-lg font-medium mb-2">3. Observe Real-time Feedback</h3>
+                    <p>Watch as transcriptions and visual content are processed in real-time. You can see the synchronized content in the timeline view.</p>
+                  </div>
+                  
+                  <div>
+                    <h3 className="text-lg font-medium mb-2">4. Generate Notes</h3>
+                    <p>When you're ready, enter a meeting title and participants, then click "Generate Notes" to process the captured content.</p>
+                    <p className="text-gray-500 mt-1">For testing without recording, you can use the "Generate Mock Notes" button.</p>
+                  </div>
+                  
+                  <div>
+                    <h3 className="text-lg font-medium mb-2">5. Export and Share</h3>
+                    <p>Review your generated notes and use the export menu to save them in your preferred format.</p>
+                  </div>
+                  
+                  <div className="bg-amber-50 p-3 rounded border border-amber-200">
+                    <h3 className="text-lg font-medium mb-2 text-amber-800">Testing Limitations</h3>
+                    <ul className="list-disc list-inside text-amber-700 space-y-1">
+                      <li>Content detection works best with clear, simple visual elements</li>
+                      <li>Processing long meetings (30+ minutes) may take more time</li>
+                      <li>For best results, use clear speech and visible screen content</li>
+                    </ul>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
           
           {/* Recording controls section */}
           <div className="mb-6">
@@ -294,6 +390,15 @@ The team also reviewed customer feedback and identified several opportunities fo
               </div>
               
               <div className="space-y-4">
+                {/* Synchronized content view - new component */}
+                {syncedContents.length > 0 && (
+                  <SynchronizedContentView 
+                    syncedContent={syncedContents}
+                    isRecording={isRecording}
+                    maxItems={5}
+                  />
+                )}
+                
                 {/* Transcription view component */}
                 <TranscriptionView 
                   transcriptions={transcriptions}

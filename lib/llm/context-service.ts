@@ -2,6 +2,16 @@ import { DetectedContent, ContentType } from '../visual/content-detector';
 import { ChatMessage } from './openai-service';
 
 /**
+ * Interface for synchronized content from API
+ */
+export interface SynchronizedContentItem {
+  timestamp: string;
+  transcription: string;
+  visualContentType: string;
+  syncConfidence: number;
+}
+
+/**
  * Interface for a transcript segment
  */
 export interface TranscriptSegment {
@@ -22,6 +32,7 @@ export interface MeetingMetadata {
   duration?: number;
   participants?: string[];
   description?: string;
+  synchronizedContent?: SynchronizedContentItem[];
 }
 
 /**
@@ -163,6 +174,20 @@ export function formatContextForLLM(context: MeetingContext): string {
       }
       
       formattedContext += '\n\n';
+    });
+  }
+  
+  // Format synchronized content if available
+  if (context.metadata.synchronizedContent && context.metadata.synchronizedContent.length > 0) {
+    formattedContext += '\n# SYNCHRONIZED CONTENT\n\n';
+    formattedContext += 'The following shows moments where visual content and audio were synchronized:\n\n';
+    
+    context.metadata.synchronizedContent.forEach((item, index) => {
+      const timestamp = new Date(item.timestamp).toISOString().substr(11, 8); // HH:MM:SS format
+      formattedContext += `## Synchronized Moment ${index + 1} [${timestamp}]\n\n`;
+      formattedContext += `Confidence: ${(item.syncConfidence * 100).toFixed(0)}%\n`;
+      formattedContext += `Visual Content Type: ${item.visualContentType}\n\n`;
+      formattedContext += `Transcription: "${item.transcription}"\n\n`;
     });
   }
   
