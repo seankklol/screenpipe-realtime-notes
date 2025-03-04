@@ -1,331 +1,96 @@
-# Real-Time Meeting Notes Generator: Project Overview
+# Real-Time Meeting Notes Generator
 
-## Introduction
+## Project Overview
 
-The Real-Time Meeting Notes Generator is a specialized Screenpipe pipe (plugin) that captures, processes, and summarizes meeting content in real-time. Leveraging Screenpipe's powerful screen capture, audio processing, and AI capabilities, this solution automatically generates comprehensive meeting notes without requiring manual documentation.
+The Real-Time Meeting Notes Generator is an application that automatically captures, processes, and summarizes meeting content in real-time. Using Screenpipe's powerful APIs, it combines audio transcription, visual content analysis, and LLM processing to generate comprehensive meeting notes with minimal human effort.
 
-## Core Objectives
+## Core Functionality
 
-- **Real-time Transcription**: Capture and transcribe meeting audio as it happens
-- **Visual Content Integration**: Extract and incorporate content from shared screens (slides, documents, diagrams)
-- **Structured Notes Generation**: Produce organized, well-formatted meeting notes with key points, action items, and decisions
-- **Contextual Awareness**: Maintain context across the entire meeting
-- **Functional Focus**: Prioritize core functionality and reliable performance over secondary concerns
+### 1. Audio Transcription
 
-## Implementation Status Overview
+The application captures and transcribes audio in real-time, providing accurate text representation of spoken content. This functionality is implemented using Screenpipe's audio transcription capabilities, which handle speech-to-text conversion with speaker detection.
 
-**Current Status**: In Development (Phase 1 - 35% Complete)
+### 2. Visual Content Integration
 
-**Completed Features**:
-- ✅ Project Structure Setup
-- ✅ Audio Transcription Pipeline
-- ✅ Initial UI Scaffolding
+The visual content integration module captures screen content during meetings and processes it to extract valuable information. Key components include:
 
-**In Progress Features**:
-- 🔄 Visual Content Integration
-- 🔄 LLM Integration for Notes Processing
+- **Screen Capture**: Using Screenpipe's vision stream to capture screen content with timestamps
+- **OCR Processing**: Extracting text from screen captures and enhancing readability
+- **Content Detection**: Identifying different types of visual content (tables, diagrams, code, etc.)
 
-**Upcoming Features**:
-- ⏳ Notes Export Functionality
-- ⏳ Meeting Database Schema
+### 3. LLM Integration
 
-## System Architecture
+The LLM integration module processes the combined audio and visual content to generate structured meeting notes. Key components include:
 
-### High-Level Architecture
+- **Context Preparation**: Organizing transcript and visual content into a structured format for the LLM
+- **Prompt Templates**: Specialized prompts for different note-taking tasks (summarization, action item extraction, etc.)
+- **Notes Generation**: Orchestrating the generation process to produce comprehensive notes
 
-```
-┌─────────────────────────────────────────────────────┐
-│                   Screenpipe Core                   │
-│ ┌───────────┐ ┌───────────┐ ┌────────────────────┐ │
-│ │Screen Feed│ │Audio Feed │ │Accessibility Events│ │
-│ └─────┬─────┘ └─────┬─────┘ └──────────┬─────────┘ │
-└───────┼───────────┼────────────────────┼───────────┘
-        │           │                    │
-        ▼           ▼                    ▼
-┌─────────────────────────────────────────────────────┐
-│               Processing Pipeline                   │
-│ ┌───────────┐ ┌───────────┐ ┌────────────────────┐ │
-│ │OCR Engine │ │STT Engine │ │UI Element Analysis │ │
-│ └─────┬─────┘ └─────┬─────┘ └──────────┬─────────┘ │
-└───────┼───────────┼────────────────────┼───────────┘
-        │           │                    │
-        ▼           ▼                    ▼
-┌─────────────────────────────────────────────────────┐
-│               Meeting Notes Pipe                    │
-│ ┌───────────┐ ┌───────────┐ ┌────────────────────┐ │
-│ │Content    │ │Notes      │ │Classification      │ │
-│ │Aggregator │ │Generator  │ │Engine              │ │
-│ └─────┬─────┘ └─────┬─────┘ └──────────┬─────────┘ │
-└───────┼───────────┼────────────────────┼───────────┘
-        │           │                    │
-        ▼           ▼                    ▼
-┌─────────────────────────────────────────────────────┐
-│                 User Interface                      │
-│ ┌───────────┐ ┌───────────┐ ┌────────────────────┐ │
-│ │Live Notes │ │Export     │ │Configuration       │ │
-│ │View       │ │Options    │ │Panel               │ │
-│ └───────────┘ └───────────┘ └────────────────────┘ │
-└─────────────────────────────────────────────────────┘
-```
+### 4. Notes Display
 
-### Component Implementation Status
+The application provides a user-friendly interface for viewing and interacting with generated notes, including:
 
-#### 1. Data Capture Layer (Screenpipe Core)
-- **Audio Feed** (✅ Implemented): Captures meeting audio from system or external microphone
-- **Screen Feed** (🔄 In Progress): Captures visual content at configurable resolution and frame rate
-- **Accessibility Events** (⏳ Pending): Monitors UI interactions for additional context
+- **Summary View**: Concise overview of the meeting's key points
+- **Full Notes**: Comprehensive meeting notes with all details
+- **Topics View**: Meeting content organized by topic
+- **Action Items**: Extracted action items with assignees and due dates
 
-#### 2. Processing Pipeline
-- **STT Engine** (✅ Implemented): Converts audio to text with high accuracy
-- **OCR Engine** (🔄 In Progress): Extracts text from screen content (presentations, shared documents)
-- **UI Element Analysis** (⏳ Pending): Identifies UI elements for contextual understanding
+## Project Architecture
 
-#### 3. Meeting Notes Pipe
-- **Content Aggregator** (🔄 In Progress): Combines and correlates visual and audio content
-- **Notes Generator** (🔄 In Progress): Transforms raw data into structured meeting notes
-- **Classification Engine** (🔄 In Progress): Categorizes content into topics, action items, etc.
+The application is built using a modular architecture to ensure maintainability and scalability:
 
-#### 4. User Interface
-- **Live Notes View** (✅ Implemented): Real-time display of generated notes
-- **Configuration Panel** (✅ Implemented): Customize behavior and appearance
-- **Export Options** (⏳ Pending): Save notes in various formats (Markdown, PDF, etc.)
+### Frontend (Next.js + React)
 
-## Technical Implementation
+- **UI Components**: Reusable React components for different parts of the interface
+- **State Management**: Context API for managing application state
+- **API Integration**: Fetch API for communicating with backend services
 
-### Data Flow
+### Backend Services
 
-1. **Capture Phase**
-   - Audio is captured via `pipe.streamTranscriptions` (✅ Implemented)
-   - Screen content is captured via `pipe.streamVision` (🔄 In Progress)
-   - Both streams are processed simultaneously in real-time
+- **API Routes**: Next.js API routes for handling notes generation requests
+- **LLM Service**: Integration with OpenAI's GPT models for text generation
+- **Data Processing**: Services for processing and combining different data types
 
-2. **Processing Phase**
-   - Audio is sent through STT processing (✅ Implemented)
-   - Screen content is processed with OCR to extract text (🔄 In Progress)
-   - UI elements are analyzed for context (⏳ Pending)
+### Screenpipe Integration
 
-3. **Analysis Phase**
-   - LLM processes combined audio and visual data (🔄 In Progress)
-   - Content is categorized into topics, action items, decisions, etc. (🔄 In Progress)
+- **Audio Capture**: Integration with Screenpipe's audio transcription API
+- **Visual Capture**: Integration with Screenpipe's vision stream API
+- **Data Querying**: Using Screenpipe's queryScreenpipe API for retrieving data
 
-4. **Generation Phase**
-   - Structured notes are generated with proper formatting (🔄 In Progress)
-   - Content is organized chronologically with timestamps (✅ Implemented)
-   - Key points are highlighted and summarized (⏳ Pending)
+## Roadmap
 
-### Current API Implementation
+### Phase 1: Core Functionality (Current Phase - 70% Complete)
 
-```typescript
-// Main pipe entry point - currently implemented
-export default async function setupPipe(pipe) {
-  // Initialize state
-  const meetingState = {
-    transcriptions: [],
-    visualContent: [],
-    notes: { sections: [], actionItems: [], decisions: [] }
-  };
+- ✅ Project setup and configuration
+- ✅ Audio transcription implementation
+- ✅ Visual content integration (90% complete)
+- ✅ LLM integration for notes processing (80% complete)
+- ⏳ UI development (65% complete)
 
-  // Start audio transcription stream - implemented
-  pipe.streamTranscriptions(async (transcription) => {
-    // Add timestamp and unique ID
-    const enrichedTranscription = {
-      ...transcription,
-      id: uuidv4(),
-      timestamp: new Date().toISOString()
-    };
-    
-    // Add to state
-    meetingState.transcriptions.push(enrichedTranscription);
-    
-    // Update notes in real-time
-    await updateNotes(meetingState, pipe);
-  });
+### Phase 2: Advanced Features
 
-  // Start vision stream for screen content - in progress
-  pipe.streamVision(async (frame) => {
-    // Process visual content
-    await processVisualContent(frame, meetingState, pipe);
-    // Update notes with visual context
-    await updateNotesWithVisuals(meetingState, pipe);
-  });
+- User authentication and profiles
+- Meeting storage and retrieval
+- Export functionality (PDF, Markdown, email)
+- Real-time collaboration
+- Advanced NLP features (sentiment analysis, meeting metrics)
 
-  // Setup UI
-  return {
-    name: "Meeting Notes Generator",
-    version: "0.3.5", // Phase 1 is 35% complete
-    routes: {
-      "/": {
-        component: "NotesView",
-        props: { meetingState }
-      },
-      "/config": {
-        component: "ConfigPanel",
-        props: { /* configuration options */ }
-      }
-      // Export route pending implementation
-    }
-  };
-}
-```
+### Phase 3: Enterprise Features
 
-### Implemented Functions
+- Team management
+- Meeting analytics
+- Integration with calendar and project management tools
+- Customizable templates
+- Privacy and compliance features
 
-```typescript
-// This function is in progress
-async function processVisualContent(frame, state, pipe) {
-  // Extract text from frame using OCR
-  const ocrResult = await extractTextFromFrame(frame, pipe);
-  
-  // Detect content type (slides, document, diagram, etc.)
-  const contentType = await detectContentType(frame, pipe);
-  
-  // Store visual content with metadata
-  state.visualContent.push({
-    timestamp: new Date().toISOString(),
-    ocrText: ocrResult.text,
-    contentType,
-    frameReference: frame.id // Reference to the actual frame data
-  });
-}
+## Technology Stack
 
-// This function is in progress
-async function updateNotes(state, pipe) {
-  // Generate comprehensive notes based on current state
-  const latestContent = getRecentContent(state, 60); // Last minute of content
-  
-  // Use AI to generate/update notes - in progress
-  // LLM integration is currently being implemented
-}
-```
-
-### Notes Structure (Target Design)
-
-```typescript
-// Example notes structure - the system is working towards this structure
-const notesStructure = {
-  metadata: {
-    title: "Team Meeting",
-    date: "2025-07-15T09:00:00Z",
-    duration: "45 minutes"
-  },
-  sections: [
-    {
-      title: "Introduction",
-      timestamp: "2025-07-15T09:00:00Z",
-      content: "The meeting began with an outline of the agenda...",
-    },
-    {
-      title: "Project Updates",
-      timestamp: "2025-07-15T09:05:00Z",
-      content: "Current status of Project X was presented...",
-      visualReferences: [
-        { type: "slide", timestamp: "2025-07-15T09:05:30Z", text: "Project X: 75% Complete" }
-      ]
-    }
-  ],
-  actionItems: [
-    {
-      description: "Follow up with vendor about delivery timeline",
-      dueDate: "2025-07-22",
-      timestamp: "2025-07-15T09:15:00Z"
-    }
-  ],
-  decisions: [
-    {
-      description: "Approved budget increase for Q3",
-      timestamp: "2025-07-15T09:30:00Z"
-    }
-  ],
-  summary: "The team discussed project progress, approved the Q3 budget increase, and assigned follow-up tasks for the vendor relationship."
-}
-```
-
-## Database Schema (Pending Implementation)
-
-The pipe will leverage Screenpipe's SQLite database, with additional tables for meeting-specific data. Database implementation is planned as part of Phase 1 but is not yet completed.
-
-## Installation and Configuration
-
-### Prerequisites
-- Screenpipe installed and running
-- Access to an LLM (OpenAI, Anthropic, or local via Ollama)
-- Sufficient system resources (4GB RAM minimum recommended)
-
-### Installation Steps
-1. Clone the repository:
-   ```
-   git clone https://github.com/example/meeting-notes-pipe.git
-   ```
-
-2. Install dependencies:
-   ```
-   cd meeting-notes-pipe
-   npm install
-   ```
-
-3. Configure API keys:
-   ```
-   cp .env.example .env
-   # Edit .env with your API keys
-   ```
-
-4. Add to Screenpipe:
-   - Open Screenpipe desktop app
-   - Navigate to Pipes section
-   - Click "Add Pipe"
-   - Select the meeting-notes-pipe directory
-
-### Current Configuration Options
-
-The pipe currently supports these configuration options:
-
-- **Transcription Settings**: Adjust sensitivity and language
-- **UI Theme**: Light or Dark mode
-
-Additional configuration options will be added as more features are implemented.
-
-## Current User Interface
-
-### Live Notes View (Implemented)
-- Real-time display of generated transcriptions
-- Timeline of meeting progress
-
-### Configuration Panel (Implemented)
-- Basic configuration options
-
-### Export Options (Pending)
-- Not yet implemented
-
-## Development Roadmap Timeline
-
-| Milestone | Planned Date | Status |
-|-----------|--------------|--------|
-| Project Initiation | June 15, 2025 | ✅ Completed |
-| Phase 1: Core Features | Aug 15, 2025 | 🔄 In Progress (35%) |
-| Initial Testing Release | Sept 1, 2025 | ⏳ Pending |
-| Phase 2: Enhanced Processing | Oct 15, 2025 | 📅 Planned |
-| Beta Release | Nov 1, 2025 | 📅 Planned |
-| Phase 3: Integration | Dec 15, 2025 | 📅 Planned |
-| 1.0 Release | Jan 15, 2026 | 📅 Planned |
-
-## Known Issues & Current Limitations
-
-1. **LLM Processing Latency**
-   - Notes generation can have 2-3 second delay with remote LLMs
-   - Large context windows may cause performance issues on older hardware
-
-2. **Visual Content Processing**
-   - OCR integration is still in development
-   - Screen content analysis is not yet fully implemented
-
-## Next Steps
-
-1. Complete the visual content integration component
-2. Finalize LLM integration for notes processing
-3. Implement basic export functionality
-4. Design and implement the meeting database schema
-5. Conduct internal testing with varied meeting scenarios
+- **Frontend**: Next.js, React, TailwindCSS
+- **Backend**: Next.js API routes
+- **LLM**: OpenAI API (GPT-4)
+- **Audio/Visual Processing**: Screenpipe SDK
+- **Data Storage**: Local storage (Phase 1), Database (Phase 2)
 
 ## Conclusion
 
-The Real-Time Meeting Notes Generator is currently in Phase 1 of development, with core audio transcription features already implemented. The visual content integration and LLM processing features are in active development, with the project on track to complete Phase 1 by the target date of August 15, 2025. The focus remains on delivering core functionality that works reliably rather than secondary concerns like privacy. 
+The Real-Time Meeting Notes Generator aims to transform how meeting notes are created and shared. By automating the capture and processing of meeting content, it allows participants to focus on the discussion rather than note-taking, while still producing comprehensive and accurate meeting documentation. 

@@ -1,0 +1,259 @@
+import { NextResponse } from 'next/server';
+import { 
+  TranscriptSegment, 
+  MeetingMetadata 
+} from '@/lib/llm/context-service';
+import { 
+  MeetingNotes,
+  generateNotes 
+} from '@/lib/llm/notes-generator';
+import { DetectedContent } from '@/lib/visual/content-detector';
+import { ContentType } from '@/lib/visual/content-detector';
+
+/**
+ * API route handler for generating meeting notes
+ */
+export async function POST(req: Request) {
+  try {
+    // Extract data from the request
+    const data = await req.json();
+    const { title, participants, transcript, visualContent } = data;
+    
+    // Validate required data
+    if (!title) {
+      return NextResponse.json(
+        { error: 'Meeting title is required' },
+        { status: 400 }
+      );
+    }
+    
+    // Prepare metadata
+    const metadata: MeetingMetadata = {
+      title,
+      date: new Date().toISOString().split('T')[0],
+      participants: participants || [],
+      startTime: data.startTime,
+      endTime: data.endTime,
+      duration: data.duration,
+      description: data.description
+    };
+    
+    // Process transcript
+    const processedTranscript: TranscriptSegment[] = transcript 
+      ? transcript 
+      : generateMockTranscript(metadata);
+    
+    // Process visual content
+    const processedVisualContent: DetectedContent[] = visualContent 
+      ? visualContent 
+      : generateMockVisualContent();
+    
+    // Generate notes
+    const notes = await generateNotes(
+      processedTranscript, 
+      processedVisualContent, 
+      metadata
+    );
+    
+    // Return generated notes
+    return NextResponse.json(notes);
+  } catch (error) {
+    console.error('Error generating notes:', error);
+    return NextResponse.json(
+      { error: 'Failed to generate notes' },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * Generates mock transcript data for testing
+ * 
+ * @param metadata Meeting metadata
+ * @returns Mock transcript segments
+ */
+function generateMockTranscript(metadata: MeetingMetadata): TranscriptSegment[] {
+  const speakers = metadata.participants || ['Alice', 'Bob', 'Charlie', 'Diana', 'Evan'];
+  const baseTime = metadata.startTime 
+    ? new Date(metadata.startTime).getTime() 
+    : new Date().setHours(10, 0, 0, 0);
+  
+  return [
+    {
+      speaker: speakers[0],
+      text: "Good morning everyone! Let's get started with our product planning meeting. Today, we need to discuss feature prioritization for the next sprint, resource allocation, and any technical challenges we might face.",
+      timestamp: new Date(baseTime).toISOString(),
+      duration: 12
+    },
+    {
+      speaker: speakers[1],
+      text: "I've prepared a list of features based on customer feedback. Feature X seems to be the most requested, followed by Feature Y and then some mobile improvements.",
+      timestamp: new Date(baseTime + 15000).toISOString(),
+      duration: 10
+    },
+    {
+      speaker: speakers[2],
+      text: "I'm a bit concerned about Feature X. It's quite complex and might introduce some performance issues if not implemented carefully.",
+      timestamp: new Date(baseTime + 28000).toISOString(),
+      duration: 8
+    },
+    {
+      speaker: speakers[0],
+      text: "That's a valid concern. Let's discuss the technical challenges. What specific performance issues are you worried about?",
+      timestamp: new Date(baseTime + 38000).toISOString(),
+      duration: 6
+    },
+    {
+      speaker: speakers[2],
+      text: "Well, Feature X will require fetching large datasets and processing them client-side. We might need to implement lazy loading, optimize our database queries, and consider some caching strategies.",
+      timestamp: new Date(baseTime + 46000).toISOString(),
+      duration: 15
+    },
+    {
+      speaker: speakers[3],
+      text: "I've been analyzing the customer feedback data, and users are also reporting issues with the dashboard. The reporting features need enhancement, and the mobile experience has been rated poorly in recent surveys.",
+      timestamp: new Date(baseTime + 63000).toISOString(),
+      duration: 12
+    },
+    {
+      speaker: speakers[4],
+      text: "On a positive note, customers have been happy with our recent security enhancements.",
+      timestamp: new Date(baseTime + 77000).toISOString(),
+      duration: 5
+    },
+    {
+      speaker: speakers[0],
+      text: "Let's talk about resource allocation. I think we should dedicate some time to addressing technical debt. Maybe 20% of our resources?",
+      timestamp: new Date(baseTime + 84000).toISOString(),
+      duration: 9
+    },
+    {
+      speaker: speakers[1],
+      text: "That seems reasonable. We could allocate 20% to technical debt, 50% to Feature X development, 20% to bug fixes, and 10% to exploratory work for Q3 features.",
+      timestamp: new Date(baseTime + 95000).toISOString(),
+      duration: 12
+    },
+    {
+      speaker: speakers[0],
+      text: "Great! So the decisions are: Feature X will be prioritized for the next sprint, we'll allocate 20% of resources to technical debt, and we'll implement the new design system incrementally. Any objections?",
+      timestamp: new Date(baseTime + 110000).toISOString(),
+      duration: 10
+    },
+    {
+      speaker: speakers[3],
+      text: "Sounds good to me.",
+      timestamp: new Date(baseTime + 122000).toISOString(),
+      duration: 2
+    },
+    {
+      speaker: speakers[0],
+      text: "Let's wrap up with action items. Alice, can you create detailed specifications for Feature X by next Friday?",
+      timestamp: new Date(baseTime + 126000).toISOString(),
+      duration: 7
+    },
+    {
+      speaker: speakers[0],
+      text: "Bob, please schedule a technical debt review session for early next week.",
+      timestamp: new Date(baseTime + 135000).toISOString(),
+      duration: 5
+    },
+    {
+      speaker: speakers[0],
+      text: "Charlie, we'll need a performance testing plan for Feature X.",
+      timestamp: new Date(baseTime + 142000).toISOString(),
+      duration: 4
+    },
+    {
+      speaker: speakers[0],
+      text: "Diana, could you analyze the customer feedback data specifically for dashboard improvement opportunities? Let's aim to have that by the 20th.",
+      timestamp: new Date(baseTime + 148000).toISOString(),
+      duration: 9
+    },
+    {
+      speaker: speakers[0],
+      text: "And Evan, please update the sprint planning board with our new priorities by Thursday.",
+      timestamp: new Date(baseTime + 159000).toISOString(),
+      duration: 6
+    },
+    {
+      speaker: speakers[0],
+      text: "Thanks everyone! Let's reconvene next week to review progress.",
+      timestamp: new Date(baseTime + 167000).toISOString(),
+      duration: 5
+    }
+  ];
+}
+
+/**
+ * Generates mock visual content for testing
+ * 
+ * @returns Mock detected visual content
+ */
+function generateMockVisualContent(): DetectedContent[] {
+  const baseTime = new Date().setHours(10, 5, 0, 0);
+  
+  return [
+    {
+      type: 'TABLE' as ContentType,
+      content: {
+        headers: ['Feature', 'Priority', 'Complexity', 'Estimated Time'],
+        rows: [
+          ['Feature X', 'High', 'High', '3 weeks'],
+          ['Feature Y', 'Medium', 'Medium', '2 weeks'],
+          ['Mobile Improvements', 'Medium', 'Low', '1 week'],
+          ['Accessibility Enhancements', 'Low', 'Medium', '2 weeks']
+        ]
+      },
+      confidence: 0.9,
+      timestamp: new Date(baseTime + 20000).toISOString(),
+      frameId: 'frame-001',
+      metadata: {
+        rowCount: 4,
+        columnCount: 4
+      }
+    },
+    {
+      type: 'CHART' as ContentType,
+      content: {
+        image: '',
+        description: 'Pie chart showing resource allocation: 50% Feature X, 20% Technical Debt, 20% Bug Fixes, 10% Q3 Planning'
+      },
+      confidence: 0.85,
+      timestamp: new Date(baseTime + 90000).toISOString(),
+      frameId: 'frame-002'
+    },
+    {
+      type: 'TEXT' as ContentType,
+      content: [
+        {
+          type: 'heading',
+          content: 'Technical Challenges',
+          confidence: 0.95
+        },
+        {
+          type: 'bullet_point',
+          content: 'Large dataset processing',
+          confidence: 0.9
+        },
+        {
+          type: 'bullet_point',
+          content: 'Client-side performance',
+          confidence: 0.9
+        },
+        {
+          type: 'bullet_point',
+          content: 'Mobile compatibility',
+          confidence: 0.9
+        }
+      ],
+      confidence: 0.95,
+      timestamp: new Date(baseTime + 50000).toISOString(),
+      frameId: 'frame-003',
+      metadata: {
+        charCount: 120,
+        lineCount: 4,
+        contentTypes: ['heading', 'bullet_point', 'bullet_point', 'bullet_point']
+      }
+    }
+  ];
+} 

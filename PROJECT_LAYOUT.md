@@ -4,6 +4,71 @@
 
 This repository contains a Next.js application designed to capture, process, and summarize meeting content in real-time using Screenpipe's powerful APIs. The application currently implements core functionality including audio transcription and initial UI scaffolding, with visual content integration and LLM processing features in active development. The focus is on ensuring core functionality works well rather than privacy concerns.
 
+## Project Layout
+
+This document outlines the structure of the Real-Time Meeting Notes Generator project.
+
+### Root Structure
+
+```
+/
+├── app/                    # Next.js app directory
+│   ├── api/                # API routes
+│   │   └── generate-notes/ # API endpoint for generating notes
+│   ├── notes/              # Notes generation page
+│   └── ...                 # Other app pages
+├── components/             # React components
+│   ├── notes/              # Notes-related components
+│   │   ├── NotesDisplay.tsx    # Component for displaying notes
+│   │   └── NotesGenerator.tsx  # Component for generating notes
+│   ├── ready-to-use-examples/  # Example components
+│   ├── ui/                     # UI components
+│   └── playground-card.tsx     # Playground card component
+├── lib/                    # Library code
+│   ├── llm/                # LLM integration
+│   │   ├── context-service.ts    # Context preparation for LLM
+│   │   ├── notes-generator.ts    # Notes generation functionality
+│   │   ├── openai-service.ts     # OpenAI API integration
+│   │   └── prompt-templates.ts   # Prompt templates for LLM
+│   ├── visual/             # Visual content processing
+│   │   ├── capture.ts            # Screen capture module
+│   │   ├── content-detector.ts   # Content type detection
+│   │   └── ocr.ts                # OCR processing
+│   └── ...                 # Other library modules
+├── public/                 # Static assets
+├── styles/                 # CSS styles
+├── ...
+└── package.json           # Project dependencies
+```
+
+### Key Components
+
+#### Visual Content Integration
+
+- **lib/visual/capture.ts**: Manages screen capture using Screenpipe's vision stream
+- **lib/visual/ocr.ts**: Processes OCR results and enhances text extraction
+- **lib/visual/content-detector.ts**: Identifies content types like tables, code, diagrams, etc.
+
+#### LLM Integration
+
+- **lib/llm/openai-service.ts**: Integrates with OpenAI API for text generation
+- **lib/llm/prompt-templates.ts**: Contains specialized prompts for different note-taking tasks
+- **lib/llm/context-service.ts**: Prepares meeting context by combining transcript and visual content
+- **lib/llm/notes-generator.ts**: Orchestrates the notes generation process
+
+#### UI Components
+
+- **components/notes/NotesDisplay.tsx**: Renders generated notes with tabs for summary, full notes, topics, and action items
+- **components/notes/NotesGenerator.tsx**: Provides interface for generating notes
+
+#### API Endpoints
+
+- **app/api/generate-notes/route.ts**: Handles note generation requests, processes input data, and returns generated notes
+
+### Pages
+
+- **app/notes/page.tsx**: Main page for the notes generation feature
+
 ## Repository Structure
 
 ```
