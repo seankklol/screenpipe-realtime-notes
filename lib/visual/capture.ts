@@ -1,7 +1,48 @@
 import { pipe } from "@screenpipe/browser";
 import { v4 as uuidv4 } from "uuid";
 
-// Define frame interface
+// Define interfaces for Screenpipe API data types
+interface ScreenpipeVisionData {
+  text?: string;
+  app_name?: string;
+  appName?: string;
+  window_name?: string;
+  windowName?: string;
+  image?: string;
+  frame?: string;
+  timestamp?: string;
+  content?: {
+    text?: string;
+    app_name?: string;
+    appName?: string;
+    window_name?: string;
+    windowName?: string;
+    image?: string;
+    frame?: string;
+  };
+  [key: string]: any;
+}
+
+interface ScreenpipeQueryResult {
+  data: Array<{
+    id: string;
+    timestamp: string;
+    content: {
+      text?: string;
+      app_name?: string;
+      appName?: string;
+      window_name?: string;
+      windowName?: string;
+      image?: string;
+      frame?: string;
+      [key: string]: any;
+    };
+    [key: string]: any;
+  }>;
+  [key: string]: any;
+}
+
+// Define frame interface with better type safety
 export interface VisualFrame {
   id: string;
   image?: string;
@@ -10,7 +51,9 @@ export interface VisualFrame {
   app_name?: string;
   window_name?: string;
   text?: string;
-  [key: string]: any;
+  metadata?: {
+    [key: string]: any;
+  };
 }
 
 /**
@@ -37,9 +80,11 @@ let latestFrame: VisualFrame | null = null;
  * @param callback Optional callback function to receive processed frames
  * @returns A function to stop the capture
  */
-export function setupScreenCapture(callback?: (frame: VisualFrame) => void) {
+export function setupScreenCapture(callback?: (frame: VisualFrame) => void): () => void {
   // Setup the vision stream with Screenpipe
-  const unsubscribe = pipe.streamVision(async (visionData: any) => {
+  // Using any type for visionData since the exact type from Screenpipe is complex
+  // and may change between versions
+  const unsubscribe = pipe.streamVision((visionData: any) => {
     try {
       // Create a frame object from vision data
       const frame: VisualFrame = {
@@ -53,20 +98,22 @@ export function setupScreenCapture(callback?: (frame: VisualFrame) => void) {
       };
       
       // Process the frame to enhance OCR quality
-      const processedFrame = await preprocessFrame(frame);
+      preprocessFrame(frame)
+        .then(processedFrame => {
+          // Store as latest frame
+          latestFrame = processedFrame;
+          
+          // Call the callback if provided
+          if (callback) {
+            callback(processedFrame);
+          }
+        })
+        .catch(error => {
+          console.error("Error processing frame:", error);
+        });
       
-      // Store as latest frame
-      latestFrame = processedFrame;
-      
-      // Call the callback if provided
-      if (callback) {
-        callback(processedFrame);
-      }
-      
-      return processedFrame;
     } catch (error) {
       console.error("Error in vision stream:", error);
-      return null;
     }
   });
   
@@ -92,7 +139,7 @@ export async function fetchLatestFrame(): Promise<VisualFrame | null> {
     }
     
     // Otherwise try to query for recent frames
-    const result = await pipe.queryScreenpipe({
+    const result: any = await pipe.queryScreenpipe({
       limit: 1,
     });
     

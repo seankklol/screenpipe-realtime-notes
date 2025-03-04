@@ -21,9 +21,9 @@ This document outlines the structure of the Real-Time Meeting Notes Generator pr
 │   ├── notes/              # Notes-related components
 │   │   ├── NotesDisplay.tsx    # Component for displaying notes
 │   │   └── NotesGenerator.tsx  # Component for generating notes
-│   ├── ready-to-use-examples/  # Example components
-│   ├── ui/                     # UI components
-│   └── playground-card.tsx     # Playground card component
+│   ├── recording-controls.tsx  # Component for audio/screen recording controls
+│   ├── status-indicators.tsx   # Component for displaying recording status
+│   └── ui/                     # UI components
 ├── lib/                    # Library code
 │   ├── llm/                # LLM integration
 │   │   ├── context-service.ts    # Context preparation for LLM
@@ -34,7 +34,12 @@ This document outlines the structure of the Real-Time Meeting Notes Generator pr
 │   │   ├── capture.ts            # Screen capture module
 │   │   ├── content-detector.ts   # Content type detection
 │   │   └── ocr.ts                # OCR processing
-│   └── ...                 # Other library modules
+│   ├── actions/            # Server actions
+│   ├── hooks/              # Custom React hooks
+│   ├── types.ts            # TypeScript type definitions
+│   ├── client-only.tsx     # Client-only component utility
+│   ├── settings-provider.tsx # Settings provider component
+│   └── utils.ts            # General utility functions
 ├── public/                 # Static assets
 ├── styles/                 # CSS styles
 ├── ...
@@ -83,15 +88,7 @@ This document outlines the structure of the Real-Time Meeting Notes Generator pr
 │   ├── notes/            # Meeting notes components
 │   │   ├── TranscriptionView.tsx # Display of real-time transcriptions
 │   │   └── NotesContainer.tsx    # Main notes display container
-│   ├── ready-to-use-examples/    # Example Screenpipe components
-│   │   ├── health-status.tsx     # Screenpipe health status
-│   │   ├── last-audio-transcription.tsx # Audio transcription display
-│   │   ├── last-ocr-image.tsx    # OCR image display
-│   │   ├── last-ui-record.tsx    # UI records display
-│   │   ├── realtime-audio.tsx    # Real-time audio streaming
-│   │   └── realtime-screen.tsx   # Real-time screen capture
-│   ├── ui/               # UI components (shadcn/ui)
-│   └── config/           # Configuration components
+│   └── ui/               # UI components (shadcn/ui)
 ├── content/              # Static content files
 ├── hooks/                # React hooks
 │   └── useTranscription.ts # Hook for audio transcription

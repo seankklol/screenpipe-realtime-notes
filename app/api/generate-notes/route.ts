@@ -10,6 +10,45 @@ import {
 import { DetectedContent } from '@/lib/visual/content-detector';
 import { ContentType } from '@/lib/visual/content-detector';
 
+// Validate the request data structure
+function validateRequest(data: any): { valid: boolean; error?: string } {
+  // Validate basic structure
+  if (!data) {
+    return { valid: false, error: 'Request body is required' };
+  }
+  
+  // Title is required
+  if (!data.title) {
+    return { valid: false, error: 'Meeting title is required' };
+  }
+  
+  // Participants should be an array if provided
+  if (data.participants && !Array.isArray(data.participants)) {
+    return { valid: false, error: 'Participants must be an array' };
+  }
+  
+  // Transcript should be an array if provided
+  if (data.transcript && !Array.isArray(data.transcript)) {
+    return { valid: false, error: 'Transcript must be an array' };
+  }
+  
+  // Visual content should be an array if provided
+  if (data.visualContent && !Array.isArray(data.visualContent)) {
+    return { valid: false, error: 'Visual content must be an array' };
+  }
+  
+  // Validate date formats if provided
+  if (data.startTime && isNaN(Date.parse(data.startTime))) {
+    return { valid: false, error: 'Start time must be a valid date string' };
+  }
+  
+  if (data.endTime && isNaN(Date.parse(data.endTime))) {
+    return { valid: false, error: 'End time must be a valid date string' };
+  }
+  
+  return { valid: true };
+}
+
 /**
  * API route handler for generating meeting notes
  */
@@ -17,15 +56,17 @@ export async function POST(req: Request) {
   try {
     // Extract data from the request
     const data = await req.json();
-    const { title, participants, transcript, visualContent } = data;
     
-    // Validate required data
-    if (!title) {
+    // Validate request data
+    const validation = validateRequest(data);
+    if (!validation.valid) {
       return NextResponse.json(
-        { error: 'Meeting title is required' },
+        { error: validation.error },
         { status: 400 }
       );
     }
+    
+    const { title, participants, transcript, visualContent } = data;
     
     // Prepare metadata
     const metadata: MeetingMetadata = {
@@ -48,19 +89,55 @@ export async function POST(req: Request) {
       ? visualContent 
       : generateMockVisualContent();
     
-    // Generate notes
-    const notes = await generateNotes(
+    // Implement timeout for note generation to prevent hanging requests
+    const timeoutPromise = new Promise<null>((_, reject) => {
+      setTimeout(() => reject(new Error('Note generation timed out')), 30000); // 30-second timeout
+    });
+    
+    // Generate notes with timeout
+    const notesPromise = generateNotes(
       processedTranscript, 
       processedVisualContent, 
       metadata
     );
     
+    // Race the note generation against timeout
+    const notes = await Promise.race([notesPromise, timeoutPromise]) as MeetingNotes;
+    
     // Return generated notes
     return NextResponse.json(notes);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error generating notes:', error);
+    
+    // Determine the appropriate error response
+    if (error.message === 'Note generation timed out') {
+      return NextResponse.json(
+        { error: 'Note generation timed out. Please try again with less content.' },
+        { status: 504 } // Gateway Timeout
+      );
+    } else if (error.name === 'SyntaxError' && error.message.includes('JSON')) {
+      return NextResponse.json(
+        { error: 'Invalid request format. Please check your JSON structure.' },
+        { status: 400 }
+      );
+    } else if (error.code === 'ECONNRESET' || error.code === 'ECONNABORTED') {
+      return NextResponse.json(
+        { error: 'Connection to API service was interrupted. Please try again.' },
+        { status: 503 } // Service Unavailable
+      );
+    } else if (error.name === 'AbortError') {
+      return NextResponse.json(
+        { error: 'Request was aborted. Please try again.' },
+        { status: 499 } // Client Closed Request
+      );
+    }
+    
     return NextResponse.json(
-      { error: 'Failed to generate notes' },
+      { 
+        error: 'Failed to generate notes',
+        message: error.message || 'Unknown error occurred',
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      },
       { status: 500 }
     );
   }
